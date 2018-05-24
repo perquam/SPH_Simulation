@@ -7,3 +7,5 @@ This application uses code from here:
 http://bigtheta.io/2017/07/08/implementing-sph-in-2d.html
 
 I just put it into Qt and added functionality.
+
+You can download ready to use application just by downloading file "Release.7z".
