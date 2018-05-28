@@ -1,7 +1,2 @@
-﻿  Moc'ing GLWidget.h...
-  GLWidget.cpp
-  main.cpp
-  SPH.cpp
-  moc_GLWidget.cpp
-  moc_SPH.cpp
+﻿  GLWidget.cpp
   SPH.vcxproj -> C:\Users\Filip\Desktop\Multimedia\Nauka\Qt\SPH\x64\Release\SPH.exe

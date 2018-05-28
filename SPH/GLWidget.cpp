@@ -7,6 +7,8 @@ void GLWidget::InitSPH(void)
 {
 	G(0) = 0.;
 	G(1) = -12000 * g;
+	fpushing(0) = 0.;
+	fpushing(0) = 0.;
 	// Inicjowanie polozen poczatkowych.
 	for (float y = EPS; y < VIEW_HEIGHT - EPS * 2.f; y += H)
 		for (float x = VIEW_WIDTH / 4; x <= VIEW_WIDTH / 2; x += H)
@@ -21,7 +23,7 @@ void GLWidget::Integrate(void)
 {
 	for (auto &p : particles)
 	{
-		p.v += DT * p.f / p.rho; //Zmiana predkosci.
+		p.v += DT * p.f / p.rho; // Zmiana prêdkoœci.
 		p.x += DT * p.v; // Zmiana polozenia.
 
 		// Warunki brzegowe.
@@ -50,6 +52,7 @@ void GLWidget::Integrate(void)
 
 void GLWidget::ComputeDensityPressure(void)
 {
+	double height_mean = 0;
 	for (auto &pi : particles)
 	{
 		pi.rho = 0.f;
@@ -66,7 +69,11 @@ void GLWidget::ComputeDensityPressure(void)
 		}
 		// Obliczanie cisnienia.
 		pi.p = GAS_CONST * (pi.rho - REST_DENS);
+		
+		height_mean += pi.x(1);
 	}
+	height_mean /= particles.size();
+	preassure = (2*height_mean * MASS * g) / 10;
 }
 
 void GLWidget::ComputeForces(void)
@@ -75,6 +82,7 @@ void GLWidget::ComputeForces(void)
 	{
 		Vector2d fpress(0.f, 0.f);
 		Vector2d fvisc(0.f, 0.f);
+		Vector2d fgrav = G * pi.rho;
 		for (auto &pj : particles)
 		{
 			if (&pi == &pj)
@@ -91,7 +99,6 @@ void GLWidget::ComputeForces(void)
 				fvisc += VISC * MASS*(pj.v - pi.v) / pj.rho * VISC_LAP*(H - r);
 			}
 		}
-		Vector2d fgrav = G * pi.rho;
 		// Sila wypadkowa.
 		pi.f = fpress + fvisc + fgrav;
 	}
@@ -107,6 +114,7 @@ void GLWidget::Update(void)
 
 void GLWidget::Render(void)
 {
+	glPointSize(H / 2.f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glLoadIdentity();
 	glOrtho(0, VIEW_WIDTH, 0, VIEW_HEIGHT, 0, 1);
@@ -134,7 +142,6 @@ void GLWidget::initializeGL()
 	// Ustawianie tla oraz rozmiaru punktow.
 	glClearColor(0.1f, 0.1f, 0.1f, 1);
 	glEnable(GL_POINT_SMOOTH);
-	glPointSize(H / 2.f);
 	glMatrixMode(GL_PROJECTION);
 }
 
@@ -154,7 +161,7 @@ void GLWidget::resizeGL(int w, int h)
 
 void GLWidget::add_Particle()
 {
-	int x = 300;
+	int x = boundary_x_l + (boundary_x_r - boundary_x_l) / 2;
 	int y = boundary_y_t - 20;
 	particles.push_back(Particle(x, y));
 }
@@ -173,8 +180,58 @@ double GLWidget::g_Value()
 {
 	return g;
 }
+
+int GLWidget::particleSize_Value()
+{
+	return H;
+}
+
+double GLWidget::p_Value()
+{
+	return preassure;
+}
+
 void GLWidget::change_gValue(int new_g)
 {
 	g = new_g;
 	G(1) = -12000 * g;
+}
+
+int GLWidget::VISC_Value()
+{
+	return VISC;
+}
+
+void GLWidget::change_Pos(int new_p)
+{
+	for (auto &p : particles)
+	{
+		int EPS_2 = 15;
+		displacement = (new_p - boundary_x_l);
+		if (p.x(0) + EPS_2 < boundary_x_l)
+		{
+			p.v(0) += displacement * 40; //Zmiana predkosci.
+		}
+		if (p.x(0) - EPS_2 > boundary_x_r)
+		{
+			p.v(0) += displacement * 40;
+		}
+	}
+	boundary_x_r = boundary_x_r + (new_p - boundary_x_l);
+	boundary_x_l = new_p;
+}
+
+void GLWidget::change_Mass(int new_m)
+{
+	MASS = new_m;
+}
+
+void GLWidget::change_ParticleSize(int new_ps)
+{
+	H = new_ps;
+}
+
+void GLWidget::change_VISC(int new_V)
+{
+	VISC = new_V;
 }
